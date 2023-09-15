@@ -9,13 +9,32 @@ body {
         "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-image: url("./assets/jB025UN-black-cool-background.jpg");
+    background-image: url("./assets/pexels-erkan-utu-243908.jpg");
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
+    height: 100vh;
 }
-
+#root {
+    height: 100vh;
+    overflow-y: scroll;
+}
 code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
         monospace;
+}
+html {
+    margin-left: auto;
+    margin-right: auto;
+}
+p {
+    overflow-wrap: anywhere;
+}
+
+.loading-spinner {
+    background-image: url("./assets/pexels-erkan-utu-243908.jpg");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+    height: 100vh;
 }
