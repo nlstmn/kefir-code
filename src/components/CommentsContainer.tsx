@@ -5,6 +5,35 @@ import CommentsList from "./CommentsList";
 import Spinner from "./Spinner";
 import Comment from "./Comment";
 
+interface CommentsData {
+    pagination?: {
+        total_pages?: number;
+        // Other pagination properties
+    };
+    data?: any;
+}
+
+interface AuthorsTotals {
+    avatar?: string;
+    id?: number;
+    name?: string;
+}
+
+interface CommentSingle {
+    data?: any;
+    author?: number;
+    created?: string;
+    id?: number;
+    likes?: number;
+    parent?: any;
+    text?: string;
+}
+
+interface CommentTotals {
+    totalComments: number;
+    totalLikes: number;
+}
+
 function CommentsContainer() {
     const [comments, setComments] = useState<string[]>([]);
     const [pagination, setPagination] = useState({
@@ -27,11 +56,6 @@ function CommentsContainer() {
         };
     }, []);
 
-    interface CommentTotals {
-        totalComments: number;
-        totalLikes: number;
-    }
-
     function calculateTotals(data: Array<number>) {
         const initialValue = {
             totalComments: 0,
@@ -47,31 +71,29 @@ function CommentsContainer() {
         return totals;
     }
 
-    interface CommentsData {
-        pagination?: {
-            total_pages: number;
-            // other pagination properties
-        };
-        data?: any;
-    }
-
     async function getData(pageNo: number) {
         setFetching(true);
 
-        let commentsData: CommentsData[] = [],
-            authors: any = [];
+        let commentsData: CommentsData = {
+            pagination: {
+                total_pages: 0
+            },
+            data: null
+        }
+        let authors: AuthorsTotals[] = [];
+
         try {
             commentsData = await getCommentsRequest(pageNo);
             authors = await getAuthorsRequest();
-            // clear any errors
+            // Clear any errors
             setErrorState({
                 error: false,
                 msg: "",
             });
-            setPagination((prev) => ({
+            setPagination((prev: any) => ({
                 ...prev,
                 page: pageNo + 1,
-                totalPages: commentsData.pagination.total_pages,
+                totalPages: commentsData?.pagination?.total_pages,
             }));
         } catch (error) {
             return setErrorState({
@@ -82,11 +104,11 @@ function CommentsContainer() {
             setFetching(false);
         }
 
-        let commentsWithAuthors = commentsData.data.map((c: any) => {
+        let commentsWithAuthors = commentsData.data.map((c: CommentSingle) => {
             let commentAuthor = authors.find((a: any) => a.id === c.author);
-
             return { ...c, replies: [], ...commentAuthor, id: c.id };
         });
+
         let parentLevelComments: any[] = [];
         parentLevelComments = commentsWithAuthors
             .filter((c: any) => c.parent == null)
@@ -125,7 +147,7 @@ function CommentsContainer() {
         setComments((prev: any): any => [...prev, ...parentLevelComments]);
     }
 
-    const onLikeToggle = (commentId: any, shouldLike = false) => {
+    const onLikeToggle = (commentId: number, shouldLike = false) => {
         let commentsCopy = [...comments];
         mutateComment({ comments: commentsCopy, id: commentId, shouldLike });
 
