@@ -164,7 +164,9 @@ function CommentsContainer() {
             }
         }
     }
+
     if (!comments.length) return <Spinner />;
+
     return (
         <div className="md:w-[50%] w-full md:max-w-[60%]  mx-auto sm:p-0 text-slate-300 m-6 p-4 h-full ">
             <div className="flex justify-between items-center border-b border-b-slate-300 pb-4 mb-12">
