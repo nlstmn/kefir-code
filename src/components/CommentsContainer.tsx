@@ -47,10 +47,18 @@ function CommentsContainer() {
         return totals;
     }
 
+    interface CommentsData {
+        pagination?: {
+            total_pages: number;
+            // other pagination properties
+        };
+        data?: any;
+    }
+
     async function getData(pageNo: number) {
         setFetching(true);
 
-        let commentsData: any = [],
+        let commentsData: CommentsData[] = [],
             authors: any = [];
         try {
             commentsData = await getCommentsRequest(pageNo);
@@ -116,6 +124,7 @@ function CommentsContainer() {
 
         setComments((prev: any): any => [...prev, ...parentLevelComments]);
     }
+
     const onLikeToggle = (commentId: any, shouldLike = false) => {
         let commentsCopy = [...comments];
         mutateComment({ comments: commentsCopy, id: commentId, shouldLike });
