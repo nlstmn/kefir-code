@@ -6,7 +6,7 @@ import Spinner from "./Spinner";
 import Comment from "./Comment";
 
 function CommentsContainer() {
-    const [comments, setComments] = useState<any[]>([]);
+    const [comments, setComments] = useState<string[]>([]);
     const [pagination, setPagination] = useState({
         page: 1,
         totalPages: Math.max(),
@@ -27,13 +27,18 @@ function CommentsContainer() {
         };
     }, []);
 
-    function calculateTotals(data: any) {
+    interface CommentTotals {
+        totalComments: number;
+        totalLikes: number;
+    }
+
+    function calculateTotals(data: Array<number>) {
         const initialValue = {
             totalComments: 0,
             totalLikes: 0,
         };
 
-        const totals = data.reduce((accumulator: any, comment: any) => {
+        const totals = data.reduce((accumulator: CommentTotals, comment: any) => {
             accumulator.totalComments += 1;
             accumulator.totalLikes += comment.likes;
             return accumulator;
@@ -41,6 +46,7 @@ function CommentsContainer() {
 
         return totals;
     }
+
     async function getData(pageNo: number) {
         setFetching(true);
 
