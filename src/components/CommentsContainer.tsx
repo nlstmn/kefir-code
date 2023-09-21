@@ -48,6 +48,10 @@ interface PaginationInfo {
     totalPages?: number;
 }
 
+interface Author {
+    id?: number;
+}
+
 function CommentsContainer() {
     const [comments, setComments] = useState<string[]>([]);
     const [pagination, setPagination] = useState({
@@ -99,7 +103,7 @@ function CommentsContainer() {
         try {
             commentsData = await getCommentsRequest(pageNo);
             authors = await getAuthorsRequest();
-            // Clear any errors
+            // Clear errors
             setErrorState({
                 error: false,
                 msg: "",
@@ -119,20 +123,20 @@ function CommentsContainer() {
         }
 
         let commentsWithAuthors = commentsData.data.map((c: CommentSingle) => {
-            let commentAuthor = authors.find((a: any) => a.id === c.author);
+            let commentAuthor = authors.find((a: Author) => a.id === c.author);
             return { ...c, replies: [], ...commentAuthor, id: c.id };
         });
 
         let parentLevelComments: any[] = [];
         parentLevelComments = commentsWithAuthors
-            .filter((c: any) => c.parent == null)
+            .filter((c: CommentOne) => c.parent == null)
             .map((comment: any) => {
                 comment.replies = buildRepliesList(comment);
                 return comment;
             });
-        function buildRepliesList(comment: any) {
+        function buildRepliesList(comment: CommentOne) {
             return commentsWithAuthors
-                .filter((c: any) => comment.id === c.parent)
+                .filter((c: CommentOne) => comment.id === c.parent)
                 .map((c: any) => {
                     c.replies = buildRepliesList(c);
                     return c;
@@ -142,12 +146,6 @@ function CommentsContainer() {
             let currentTotals = calculateTotals(commentsData.data);
 
             if (pageNo === 1) return currentTotals;
-            console.log({
-                prev,
-                currentTotals,
-                totalComments: prev.totalComments + currentTotals.totalComments,
-                totalLikes: prev.totalLikes + currentTotals.totalLikes,
-            });
             return {
                 totalComments: prev.totalComments + currentTotals.totalComments,
                 totalLikes: prev.totalLikes + currentTotals.totalLikes,
@@ -178,7 +176,7 @@ function CommentsContainer() {
         shouldLike = false,
     }: {
         comments: any[];
-        id: any;
+        id: number;
         shouldLike: Boolean;
     }): any {
         for (const comment of comments) {
@@ -209,7 +207,7 @@ function CommentsContainer() {
                 <span className="font-bold">
                     {infoState.totalComments}
                     {` comments`}
-                </span>{" "}
+                </span>
                 <span className="flex gap-2 items-center font-bold">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -231,7 +229,6 @@ function CommentsContainer() {
                     <div key={comment.id} className="">
                         <Comment {...comment} onLikeToggle={onLikeToggle} />
                         <div className="sm:pl-16 pl-10">
-                            {" "}
                             <CommentsList
                                 onLikeToggle={onLikeToggle}
                                 comments={comment.replies}
@@ -241,7 +238,6 @@ function CommentsContainer() {
                 );
             })}
             <div className="flex flex-col  items-center justify-center my-4">
-                {" "}
                 {errorState.error ? (
                     <span className="text-red-600 block m-4 ">
                         {errorState.msg}
@@ -259,7 +255,7 @@ function CommentsContainer() {
                         disabled={fetching}
                         className="px-4 py-1 mt-1 mb-20 bg-slate-500 rounded text-slate-50  w-[30%] "
                     >
-                        {fetching ? "Loading..." : "Upload more"}{" "}
+                        {fetching ? "Loading..." : "Upload more"}
                     </button>
                 ) : null}
             </div>

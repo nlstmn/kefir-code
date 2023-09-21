@@ -45,7 +45,6 @@ const Comment = ({
                             className={`lucide lucide-heart w-4 h-4 hover:fill-red-500 cursor-pointer ${liked ? "fill-red-600" : ""
                                 }`}
                             onClick={() => {
-                                console.log("here");
                                 onLikeToggle(id, !liked);
                             }}
                         >

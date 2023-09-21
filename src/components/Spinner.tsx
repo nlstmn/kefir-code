@@ -6,7 +6,6 @@ function Spinner() {
             role="status flex"
             className="flex items-center justify-center mt-6 loading-spinner"
         >
-            {" "}
             <h1 className="text-2xl font-bold text-slate-200 mx-4">
                 Loading comments...
             </h1>
