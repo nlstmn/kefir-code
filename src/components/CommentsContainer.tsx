@@ -29,9 +29,23 @@ interface CommentSingle {
     text?: string;
 }
 
+interface CommentOne {
+    author?: number;
+    created?: string;
+    id?: number;
+    likes: number;
+    parent?: any;
+    text?: string;
+}
+
 interface CommentTotals {
     totalComments: number;
     totalLikes: number;
+}
+
+interface PaginationInfo {
+    page?: number;
+    totalPages?: number;
 }
 
 function CommentsContainer() {
@@ -56,15 +70,15 @@ function CommentsContainer() {
         };
     }, []);
 
-    function calculateTotals(data: Array<number>) {
+    function calculateTotals(data: CommentOne[]) {
         const initialValue = {
             totalComments: 0,
             totalLikes: 0,
         };
 
-        const totals = data.reduce((accumulator: CommentTotals, comment: any) => {
+        const totals = data.reduce((accumulator: CommentTotals, comment: CommentOne) => {
             accumulator.totalComments += 1;
-            accumulator.totalLikes += comment.likes;
+            accumulator.totalLikes += comment?.likes;
             return accumulator;
         }, initialValue);
 
@@ -90,10 +104,10 @@ function CommentsContainer() {
                 error: false,
                 msg: "",
             });
-            setPagination((prev: any) => ({
+            setPagination((prev: PaginationInfo) => ({
                 ...prev,
                 page: pageNo + 1,
-                totalPages: commentsData?.pagination?.total_pages,
+                totalPages: commentsData?.pagination?.total_pages || 0,
             }));
         } catch (error) {
             return setErrorState({
