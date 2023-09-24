@@ -1,3 +1,4 @@
 [submodule "_themes/al-folio"] 
   path = _themes/al-folio 
-  url = https://github.com/nlstmn/kefir-code/
+  url = https://github.com/nlstmn/al-folio.git
+  branch = gh-pages
