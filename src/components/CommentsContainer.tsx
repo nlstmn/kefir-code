@@ -4,53 +4,7 @@ import getCommentsRequest from "src/api/comments/getCommentsRequest";
 import CommentsList from "./CommentsList";
 import Spinner from "./Spinner";
 import Comment from "./Comment";
-
-interface CommentsData {
-    pagination?: {
-        total_pages?: number;
-        // Other pagination properties
-    };
-    data?: any;
-}
-
-interface AuthorsTotals {
-    avatar?: string;
-    id?: number;
-    name?: string;
-}
-
-interface CommentSingle {
-    data?: any;
-    author?: number;
-    created?: string;
-    id?: number;
-    likes?: number;
-    parent?: any;
-    text?: string;
-}
-
-interface CommentOne {
-    author?: number;
-    created?: string;
-    id?: number;
-    likes: number;
-    parent?: any;
-    text?: string;
-}
-
-interface CommentTotals {
-    totalComments: number;
-    totalLikes: number;
-}
-
-interface PaginationInfo {
-    page?: number;
-    totalPages?: number;
-}
-
-interface Author {
-    id?: number;
-}
+import * as Types from "../interfaces/IComments";
 
 function CommentsContainer() {
     const [comments, setComments] = useState<string[]>([]);
@@ -74,13 +28,13 @@ function CommentsContainer() {
         };
     }, []);
 
-    function calculateTotals(data: CommentOne[]) {
+    function calculateTotals(data: Types.CommentOne[]) {
         const initialValue = {
             totalComments: 0,
             totalLikes: 0,
         };
 
-        const totals = data.reduce((accumulator: CommentTotals, comment: CommentOne) => {
+        const totals = data.reduce((accumulator: Types.CommentTotals, comment: Types.CommentOne) => {
             accumulator.totalComments += 1;
             accumulator.totalLikes += comment?.likes;
             return accumulator;
@@ -92,13 +46,13 @@ function CommentsContainer() {
     async function getData(pageNo: number) {
         setFetching(true);
 
-        let commentsData: CommentsData = {
+        let commentsData: Types.CommentsData = {
             pagination: {
                 total_pages: 0
             },
             data: null
         }
-        let authors: AuthorsTotals[] = [];
+        let authors: Types.AuthorsTotals[] = [];
 
         try {
             commentsData = await getCommentsRequest(pageNo);
@@ -108,7 +62,7 @@ function CommentsContainer() {
                 error: false,
                 msg: "",
             });
-            setPagination((prev: PaginationInfo) => ({
+            setPagination((prev: Types.PaginationInfo) => ({
                 ...prev,
                 page: pageNo + 1,
                 totalPages: commentsData?.pagination?.total_pages || 0,
@@ -122,21 +76,21 @@ function CommentsContainer() {
             setFetching(false);
         }
 
-        let commentsWithAuthors = commentsData.data.map((c: CommentSingle) => {
-            let commentAuthor = authors.find((a: Author) => a.id === c.author);
+        let commentsWithAuthors = commentsData.data.map((c: Types.CommentSingle) => {
+            let commentAuthor = authors.find((a: Types.Author) => a.id === c.author);
             return { ...c, replies: [], ...commentAuthor, id: c.id };
         });
 
         let parentLevelComments: any[] = [];
         parentLevelComments = commentsWithAuthors
-            .filter((c: CommentOne) => c.parent == null)
+            .filter((c: Types.CommentOne) => c.parent == null)
             .map((comment: any) => {
                 comment.replies = buildRepliesList(comment);
                 return comment;
             });
-        function buildRepliesList(comment: CommentOne) {
+        function buildRepliesList(comment: Types.CommentOne) {
             return commentsWithAuthors
-                .filter((c: CommentOne) => comment.id === c.parent)
+                .filter((c: Types.CommentOne) => comment.id === c.parent)
                 .map((c: any) => {
                     c.replies = buildRepliesList(c);
                     return c;
