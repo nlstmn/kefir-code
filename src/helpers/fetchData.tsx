@@ -2,87 +2,112 @@ import getAuthorsRequest from "src/api/authors/getAuthorsRequest";
 import getCommentsRequest from "src/api/comments/getCommentsRequest";
 import * as Types from "../interfaces/IComments";
 
+// Function to calculate totals
 function calculateTotals(data: Types.CommentOne[]) {
-    const initialValue = {
-        totalComments: 0,
-        totalLikes: 0,
-    };
-
-    const totals = data.reduce((accumulator: Types.CommentTotals, comment: Types.CommentOne) => {
-        accumulator.totalComments += 1;
-        accumulator.totalLikes += comment?.likes;
-        return accumulator;
-    }, initialValue);
-
-    return totals;
+    return data.reduce(
+        (accumulator: Types.CommentTotals, comment: Types.CommentOne) => {
+            accumulator.totalComments += 1;
+            accumulator.totalLikes += comment?.likes || 0;
+            return accumulator;
+        },
+        { totalComments: 0, totalLikes: 0 }
+    );
 }
 
-export async function getData(pageNo: number, setFetching: any, setErrorState: any, setComments: any, setPagination: any, setInfoState: any) {
-    setFetching(true);
-
-    let commentsData: Types.CommentsData = {
-        pagination: {
-            total_pages: 0
-        },
-        data: null
-    }
-    let authors: Types.AuthorsTotals[] = [];
-
+// Function to fetch comments and authors data: just API calls
+async function fetchData(pageNo: number) {
     try {
-        commentsData = await getCommentsRequest(pageNo);
-        authors = await getAuthorsRequest();
-        // Clear errors
-        setErrorState({
-            error: false,
-            msg: "",
-        });
-        setPagination((prev: Types.PaginationInfo) => ({
-            ...prev,
-            page: pageNo + 1,
-            totalPages: commentsData?.pagination?.total_pages || 0,
-        }));
+        const commentsData: Types.CommentsData = await getCommentsRequest(pageNo);
+        const authors: Types.AuthorsTotals[] = await getAuthorsRequest();
+        return { commentsData, authors };
     } catch (error) {
-        return setErrorState({
-            error: true,
-            msg: "Something went wrong, please try again!",
-        });
-    } finally {
-        setFetching(false);
+        throw new Error("Something went wrong, please try again!");
     }
+}
 
-    let commentsWithAuthors = commentsData.data.map((c: Types.CommentSingle) => {
-        let commentAuthor = authors.find((a: Types.Author) => a.id === c.author);
+// Function to combine comments with authors and build the comment tree
+function combineCommentsWithAuthors(commentsData: Types.CommentsData, authors: Types.AuthorsTotals[]) {
+    return commentsData.data.map((c: Types.CommentSingle) => {
+        const commentAuthor = authors.find((a: Types.Author) => a.id === c.author);
         return { ...c, replies: [], ...commentAuthor, id: c.id };
     });
+}
 
-    let parentLevelComments: any[] = [];
-    parentLevelComments = commentsWithAuthors
-        .filter((c: Types.CommentOne) => c.parent == null)
-        .map((comment: any) => {
-            comment.replies = buildRepliesList(comment);
-            return comment;
-        });
+// Function to build the comment tree
+function buildCommentTree(commentsWithAuthors: Types.CommentSingle[]) {
     function buildRepliesList(comment: Types.CommentOne) {
         return commentsWithAuthors
-            .filter((c: Types.CommentOne) => comment.id === c.parent)
+            .filter((c: any) => comment.id === c.parent)
             .map((c: any) => {
                 c.replies = buildRepliesList(c);
                 return c;
             });
     }
-    setInfoState((prev: any) => {
-        let currentTotals = calculateTotals(commentsData.data);
 
-        if (pageNo === 1) return currentTotals;
-        return {
-            totalComments: prev.totalComments + currentTotals.totalComments,
-            totalLikes: prev.totalLikes + currentTotals.totalLikes,
-        };
-    });
+    const parentLevelComments = commentsWithAuthors
+        .filter((c: any) => c.parent == null)
+        .map((comment: any) => {
+            comment.replies = buildRepliesList(comment);
+            return comment;
+        });
 
-    if (pageNo === 1) {
-        return setComments([...parentLevelComments]);
-    }
-
-    setComments((prev: any): any => [...prev, ...parentLevelComments]);
+    return parentLevelComments;
 }
+
+// Function to update the component state
+function getData(
+    pageNo: number,
+    setFetching: any,
+    setErrorState: any,
+    setComments: any,
+    setPagination: any,
+    setInfoState: any
+) {
+    setFetching(true);
+
+    fetchData(pageNo)
+        .then(({ commentsData, authors }) => {
+            // Clear errors
+            setErrorState({ error: false, msg: "" });
+
+            // Update pagination
+            setPagination((prev: Types.PaginationInfo) => ({
+                ...prev,
+                page: pageNo + 1,
+                totalPages: commentsData?.pagination?.total_pages || 0,
+            }));
+
+            // Combine comments with authors and build the comment tree
+            const commentsWithAuthors = combineCommentsWithAuthors(commentsData, authors);
+
+            // Build the comment tree
+            const parentLevelComments = buildCommentTree(commentsWithAuthors);
+
+            // Calculate and update totals
+            setInfoState((prev: any) => {
+                const currentTotals = calculateTotals(commentsData.data);
+
+                if (pageNo === 1) return currentTotals;
+                return {
+                    totalComments: prev.totalComments + currentTotals.totalComments,
+                    totalLikes: prev.totalLikes + currentTotals.totalLikes,
+                };
+            });
+
+            // Update comments state
+            if (pageNo === 1) {
+                setComments([...parentLevelComments]);
+            } else {
+                setComments((prev: any): any => [...prev, ...parentLevelComments]);
+            }
+        })
+        .catch((error) => {
+            // Handle errors here
+            setErrorState({ error: true, msg: error.message });
+        })
+        .finally(() => {
+            setFetching(false);
+        });
+}
+
+export { getData };
